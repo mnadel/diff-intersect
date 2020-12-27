@@ -7,32 +7,20 @@ use crypto::md5::Md5;
 use crypto::digest::Digest;
 
 fn main() {
-    if env::args().len() != 3 {
-        println!("usage: diff-intersect <old file> <new file>");
+    let args: Vec<String> = env::args().collect();
+
+    if args.len() != 3 {
+        let prog_name = args[0].split(std::path::MAIN_SEPARATOR).last().unwrap();
+        println!("usage: {} <old file> <new file>", prog_name);
         std::process::exit(1);
     }
-
-    let args: Vec<String> = env::args().collect();
 
     let old_reader = buf_reader(&args[1]);
     let new_reader = buf_reader(&args[2]);
 
-    let old_hashes = md5_from(old_reader);
-    let mut hasher = Md5::new();
-    
-    let mapper = |v: std::result::Result<String, std::io::Error>| {
-        let line = v.unwrap();
-        let line = line.trim();
-        
-        hasher.input_str(&line);
-        if old_hashes.contains(&hasher.result_str()) {
-            println!("{}", line);
-        }
-        
-        hasher.reset();
-    };
-
-    new_reader.lines().for_each(mapper);
+    let mut hs = HashSet::new();
+    process_stream(old_reader, &mut hs, true);
+    process_stream(new_reader, &mut hs, false);
 }
 
 fn buf_reader(file_path: &String) -> BufReader<File> {
@@ -46,20 +34,22 @@ fn buf_reader(file_path: &String) -> BufReader<File> {
     BufReader::new(f)
 }
 
-fn md5_from(reader: BufReader<File>) -> HashSet<String> {
-    let mut hs = HashSet::new();
+fn process_stream(reader: BufReader<File>, hs: &mut HashSet<String>, insert: bool) {
     let mut hasher = Md5::new();
 
-    let mapper = |v: std::result::Result<String, std::io::Error>| {
+    reader.lines().for_each(|v: std::result::Result<String, std::io::Error>| {
         let line = v.unwrap();
         let line = line.trim();
-        
+
         hasher.input_str(&line);
-        hs.insert(hasher.result_str());
+        let hashed = hasher.result_str();
+        
+        if insert {
+            hs.insert(hashed);
+        } else if hs.contains(&hashed) {
+            println!("{}", line);
+        }
+
         hasher.reset();
-    };
-
-    reader.lines().for_each(mapper);
-
-    hs
+    });
 }
