@@ -14,7 +14,10 @@ fn main() {
 
     let args: Vec<String> = env::args().collect();
 
-    let old = md5_from(&args[1]);
+    let old_reader = buf_reader(&args[1]);
+    let new_reader = buf_reader(&args[2]);
+
+    let old_hashes = md5_from(old_reader);
     let mut hasher = Md5::new();
     
     let mapper = |v: std::result::Result<String, std::io::Error>| {
@@ -22,23 +25,28 @@ fn main() {
         let line = line.trim();
         
         hasher.input_str(&line);
-        let hashed = hasher.result_str();
-        if old.contains(&hashed) {
+        if old_hashes.contains(&hasher.result_str()) {
             println!("{}", line);
         }
         
         hasher.reset();
     };
 
-    buf_reader(&args[2]).lines().for_each(mapper);
+    new_reader.lines().for_each(mapper);
 }
 
 fn buf_reader(file_path: &String) -> BufReader<File> {
-    let f = File::open(file_path).expect(&format!("file not found: {}", &file_path));
+    let f = match File::open(file_path) {
+        Ok(f) => f,
+        Err(e) => {
+            println!("file `{}` not found: {}", file_path, e);
+            std::process::exit(2);
+        }
+    };
     BufReader::new(f)
 }
 
-fn md5_from(path: &String) -> HashSet<String> {
+fn md5_from(reader: BufReader<File>) -> HashSet<String> {
     let mut hs = HashSet::new();
     let mut hasher = Md5::new();
 
@@ -47,14 +55,11 @@ fn md5_from(path: &String) -> HashSet<String> {
         let line = line.trim();
         
         hasher.input_str(&line);
-        let hashed = hasher.result_str();
-        
-        hs.insert(hashed);
-        
+        hs.insert(hasher.result_str());
         hasher.reset();
     };
 
-    buf_reader(path).lines().for_each(mapper);
+    reader.lines().for_each(mapper);
 
     hs
 }
