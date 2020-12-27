@@ -14,33 +14,36 @@ fn main() {
 
     let args: Vec<String> = env::args().collect();
 
-    let old = hash_file_contents(&args[1]);
-
-    let reader = BufReader::new(File::open(&args[2]).expect(&format!("file not found: {}", &args[2])));
+    let old = md5_from(&args[1]);
     let mut hasher = Md5::new();
-
-    for (idx, line) in reader.lines().enumerate() {
-        let line = line.expect(&format!("cannot read {}@{}", &args[2], idx));
+    
+    let mapper = |v: std::result::Result<String, std::io::Error>| {
+        let line = v.unwrap();
         let line = line.trim();
-
+        
         hasher.input_str(&line);
         let hashed = hasher.result_str();
         if old.contains(&hashed) {
             println!("{}", line);
         }
-
+        
         hasher.reset();
-    }
+    };
+
+    buf_reader(&args[2]).lines().for_each(mapper);
 }
 
-fn hash_file_contents(path: &String) -> HashSet<String> {
+fn buf_reader(file_path: &String) -> BufReader<File> {
+    let f = File::open(file_path).expect(&format!("file not found: {}", &file_path));
+    BufReader::new(f)
+}
+
+fn md5_from(path: &String) -> HashSet<String> {
     let mut hs = HashSet::new();
     let mut hasher = Md5::new();
 
-    let reader = BufReader::new(File::open(path).expect(&format!("file not found: {}", path)));
-
-    for (idx, line) in reader.lines().enumerate() {
-        let line = line.expect(&format!("cannot read {}@{}", path, idx));
+    let mapper = |v: std::result::Result<String, std::io::Error>| {
+        let line = v.unwrap();
         let line = line.trim();
         
         hasher.input_str(&line);
@@ -49,7 +52,9 @@ fn hash_file_contents(path: &String) -> HashSet<String> {
         hs.insert(hashed);
         
         hasher.reset();
-    }
+    };
+
+    buf_reader(path).lines().for_each(mapper);
 
     hs
 }
