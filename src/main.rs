@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::collections::HashSet;
 
-use fasthash::murmur3;
+use fasthash::metro;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -33,12 +33,12 @@ fn buf_reader(file_path: &String) -> BufReader<File> {
     BufReader::new(f)
 }
 
-fn process_stream(reader: BufReader<File>, hs: &mut HashSet<u128>, insert: bool) {
+fn process_stream(reader: BufReader<File>, hs: &mut HashSet<u64>, insert: bool) {
     reader.lines().for_each(|v: std::result::Result<String, std::io::Error>| {
         let line = v.unwrap();
         let line = line.trim();
 
-        let hashed = murmur3::hash128(&line);
+        let hashed = metro::hash64(&line);
         
         if insert {
             hs.insert(hashed);
