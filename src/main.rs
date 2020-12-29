@@ -1,9 +1,6 @@
 use std::env;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
 use std::collections::HashSet;
-
-use fasthash::metro;
+use std::io::BufRead;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -14,8 +11,8 @@ fn main() {
         std::process::exit(1);
     }
 
-    let reader_one = buf_reader(&args[1]);
-    let reader_two = buf_reader(&args[2]);
+    let reader_one = diff_intersect::buf_reader_from_path(&args[1]);
+    let reader_two = diff_intersect::buf_reader_from_path(&args[2]);
 
     let mut hs = HashSet::new();
 
@@ -23,27 +20,15 @@ fn main() {
         let line = v.unwrap();
         let line = line.trim();
 
-        hs.insert(metro::hash64(&line));
+        hs.insert(diff_intersect::hash(&line));
     });
 
     reader_two.lines().for_each(|v| {
         let line = v.unwrap();
         let line = line.trim();
 
-        if hs.contains(&metro::hash64(&line)) {
+        if hs.contains(&diff_intersect::hash(&line)) {
             println!("{}", &line); 
         }
     });
-}
-
-fn buf_reader(file_path: &String) -> BufReader<File> {
-    let f = match File::open(file_path) {
-        Ok(f) => f,
-        Err(e) => {
-            println!("file `{}` not found: {}", file_path, e);
-            std::process::exit(2);
-        }
-    };
-
-    BufReader::new(f)
 }
