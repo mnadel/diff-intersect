@@ -19,19 +19,21 @@ fn main() {
 
     let mut hs = HashSet::new();
 
-    reader_one.lines().map(normalize).for_each(|line| {
+    reader_one.lines().for_each(|v| {
+        let line = v.unwrap();
+        let line = line.trim();
+
         hs.insert(metro::hash64(&line));
     });
 
-    reader_two.lines().map(normalize).for_each(|line| {
+    reader_two.lines().for_each(|v| {
+        let line = v.unwrap();
+        let line = line.trim();
+
         if hs.contains(&metro::hash64(&line)) {
             println!("{}", &line); 
         }
     });
-}
-
-fn normalize(v: std::result::Result<String, std::io::Error>) -> String {
-    String::from(v.unwrap().trim())
 }
 
 fn buf_reader(file_path: &String) -> BufReader<File> {
