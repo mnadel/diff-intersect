@@ -11,8 +11,21 @@ fn main() {
         std::process::exit(1);
     }
 
-    let reader_one = diff_intersect::buf_reader_from_path(&args[1]);
-    let reader_two = diff_intersect::buf_reader_from_path(&args[2]);
+    let reader_one = match diff_intersect::buf_reader_from_path(&args[1]) {
+        Ok(r) => r,
+        Err(_) => {
+            println!("file not found: {}", &args[1]);
+            std::process::exit(2);
+        }
+    };
+
+    let reader_two = match diff_intersect::buf_reader_from_path(&args[2]) {
+        Ok(r) => r,
+        Err(_) => {
+            println!("file not found: {}", &args[2]);
+            std::process::exit(2);
+        }
+    };
 
     let mut hs = HashSet::new();
 
