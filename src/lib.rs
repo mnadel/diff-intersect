@@ -18,11 +18,3 @@ pub fn buf_reader_from_path(file_path: &String) -> BufReader<File> {
 
     BufReader::new(f)
 }
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn hashes_to_u64() {
-        assert_eq!(diff_intersect::hash("a string"), 45);
-    }
-}
