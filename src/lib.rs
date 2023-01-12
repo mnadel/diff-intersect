@@ -1,10 +1,13 @@
 use std::fs::File;
 use std::io::BufReader;
 
-use fasthash::metro;
+use ahash::AHasher;
+use std::hash::Hasher;
 
 pub fn hash(s: &str) -> u64 {
-    metro::hash64(&s)
+    let mut h = AHasher::default();
+    h.write(s.as_bytes());
+    h.finish()
 }
 
 pub fn buf_reader_from_path(file_path: &String) -> Result<BufReader<File>, std::io::Error> {
