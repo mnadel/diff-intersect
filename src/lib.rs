@@ -1,5 +1,7 @@
 use std::fs::File;
+use std::io::BufRead;
 use std::io::BufReader;
+use std::collections::HashSet;
 
 use ahash::AHasher;
 use std::hash::Hasher;
@@ -10,11 +12,15 @@ pub fn hash(s: &str) -> u64 {
     h.finish()
 }
 
-pub fn buf_reader_from_path(file_path: &String) -> Result<BufReader<File>, std::io::Error> {
-    let f = match File::open(file_path) {
-        Ok(f) => f,
-        Err(e) => return Err(e),
-    };
+pub fn build_hashes(f: &File) -> HashSet<u64> {
+    let mut hs = HashSet::new();
 
-    Ok(BufReader::new(f))
+    BufReader::new(f).lines().for_each(|v| {
+        let line = v.unwrap();
+        let line = line.trim();
+
+        hs.insert(hash(&line));
+    });
+
+    return hs;
 }
