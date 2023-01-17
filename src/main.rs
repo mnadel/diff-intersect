@@ -28,15 +28,12 @@ fn main() {
         }
     };
 
-    let shorter_file: File;
-    let longer_file: File;
+    let mut longer_file = &file1;
+    let mut shorter_file = &file2;
 
-    if file1.metadata().unwrap().len() >= file2.metadata().unwrap().len() {
-        longer_file = file1;
-        shorter_file = file2;
-    } else {
-        longer_file = file2;
-        shorter_file = file1;
+    if file1.metadata().unwrap().len() < file2.metadata().unwrap().len() {
+        longer_file = &file2;
+        shorter_file = &file1;
     }
 
     let hashes = diff_intersect::build_hashes(&shorter_file);
